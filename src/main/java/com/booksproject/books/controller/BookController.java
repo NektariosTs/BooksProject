@@ -67,21 +67,22 @@ public class BookController {
 
     @PostMapping
     public void createBook(@RequestBody BookRequest bookRequest) {
-        long id;
-        if (books.isEmpty()) {
-            id = 1;
-        } else {
-            id = books.get(books.size() - 1).getId() + 1;
-        }
+//        long id;
+//        if (books.isEmpty()) {
+//            id = 1;
+//        } else {
+//            id = books.get(books.size() - 1).getId() + 1;
+//        }
+        long id = books.isEmpty() ? 1 : books.get(books.size() - 1).getId() + 1; //ternary operator
 
-        Book book = new Book(
-                id,
-                bookRequest.getTitle(),
-                bookRequest.getAuthor(),
-                bookRequest.getCategory(),
-                bookRequest.getRating()
-        );
-
+        Book book = convertToBook(id, bookRequest);
+//        Book book = new Book(
+//                id,
+//                bookRequest.getTitle(),
+//                bookRequest.getAuthor(),
+//                bookRequest.getCategory(),
+//                bookRequest.getRating()
+//        )
         books.add(book);
 //        for (Book book : books) {
 //            if (book.getTitle().equalsIgnoreCase(newBook.getTitle())){
@@ -92,9 +93,10 @@ public class BookController {
     }
 
     @PutMapping("/{id}")
-    public void updateBook(@PathVariable Long id, @RequestBody Book updatedBook) {
+    public void updateBook(@PathVariable long id, @RequestBody BookRequest bookRequest) {
         for (int i = 0; i < books.size(); i++) {
             if (books.get(i).getId() == id) {
+                Book updatedBook = convertToBook(id, bookRequest);
                 books.set(i, updatedBook);
                 return;
             }
@@ -104,5 +106,15 @@ public class BookController {
     @DeleteMapping("/{id}")
     public void deleteBook(@PathVariable Long id) {
         books.removeIf(book -> book.getId() == id);
+    }
+
+    private Book convertToBook(long id, BookRequest bookRequest) {
+        return new Book(
+                id,
+                bookRequest.getTitle(),
+                bookRequest.getAuthor(),
+                bookRequest.getCategory(),
+                bookRequest.getRating()
+        );
     }
 }
