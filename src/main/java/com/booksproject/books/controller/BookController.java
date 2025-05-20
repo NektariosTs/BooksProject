@@ -1,6 +1,7 @@
 package com.booksproject.books.controller;
 
 import com.booksproject.books.entity.Book;
+import com.booksproject.books.exception.BookNotFoundException;
 import com.booksproject.books.request.BookRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,7 +40,8 @@ public class BookController {
     @Operation(summary = "Get all books", description = "Retrieve a list of all available books")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping
-    public List<Book> getBooks(@Parameter(description = "Optional query parameter") @RequestParam(required = false) String category) {
+    public List<Book> getBooks(@Parameter(description = "Optional query parameter")
+                               @RequestParam(required = false) String category) {
 
         if (category == null) {
             return books;
@@ -64,7 +66,8 @@ public class BookController {
     @Operation(summary = "Geta book by Id", description = "Retrieve a specific book by Id")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/{id}")
-    public Book getBookById(@Parameter(description = "Id of book to be retrieved") @PathVariable @Min(value = 1) Long id) {
+    public Book getBookById(@Parameter(description = "Id of book to be retrieved")
+                            @PathVariable @Min(value = 1) Long id) {
 
 //        if (id < 1) { Validation
 //            throw new Exception("incorrect id");
@@ -72,7 +75,8 @@ public class BookController {
         return books.stream()
                 .filter(book -> book.getId() == id)
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(
+                        () -> new BookNotFoundException("Book not found - " + id));
 //        for (Book book : books) {
 //            if (book.getTitle().equalsIgnoreCase(title)){
 //                return book;
@@ -95,6 +99,7 @@ public class BookController {
 //        }
         long id = books.isEmpty() ? 1 : books.get(books.size() - 1).getId() + 1; //ternary operator
 
+
         Book book = convertToBook(id, bookRequest);
 //        Book book = new Book(
 //                id,
@@ -116,21 +121,32 @@ public class BookController {
     @Operation(summary = "Update a book", description = "Update the details of an existing book")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PutMapping("/{id}")
-    public void updateBook(@Parameter(description = "Id of the book to update") @PathVariable @Min(value = 1) long id, @Valid @RequestBody BookRequest bookRequest) {
+    public Book updateBook(@Parameter(description = "Id of the book to update")
+                           @PathVariable @Min(value = 1) long id, @Valid @RequestBody BookRequest bookRequest) {
         for (int i = 0; i < books.size(); i++) {
             if (books.get(i).getId() == id) {
                 Book updatedBook = convertToBook(id, bookRequest);
                 books.set(i, updatedBook);
-                return;
+                return updatedBook;
             }
         }
+        throw new BookNotFoundException("book not found - " + id);
+
     }
 
 
     @Operation(summary = "Delete a book", description = "Remove a book from a list")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
-    public void deleteBook(@Parameter(description = "Remove a book from the list") @PathVariable @Min(value = 1) long id) {
+    public void deleteBook(@Parameter(description = "Remove a book from the list")
+                           @PathVariable @Min(value = 1) long id) {
+
+        books.stream()
+                .filter(book -> book.getId() == id)
+                .findFirst()
+                .orElseThrow(
+                        () -> new BookNotFoundException("Book not found - " + id));
+
         books.removeIf(book -> book.getId() == id);
     }
 
